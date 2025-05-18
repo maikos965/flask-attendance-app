@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, render_template, send_from_directory, request, jsonify
 import json
 import os
 
@@ -19,13 +19,11 @@ def save_data(data):
 
 @app.route('/')
 def index():
-    # index.html を提供
-    return send_from_directory('..', 'index.html')
+    return render_template('index.html')
 
 @app.route('/login')
 def login():
-    # login.html を提供
-    return send_from_directory('..', 'login.html')
+    return render_template('login.html')
 
 @app.route('/data/<path:filename>')
 def serve_data_static(filename):
