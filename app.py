@@ -57,6 +57,11 @@ def count():
     # 入室人数を返す
     data = load_data()
     return jsonify({'count': len(data)})
+    
+@app.route('/reset', methods=['POST'])
+def reset_data():
+    save_data([])
+    return jsonify({'status': 'reset', 'message': '入室データをリセットしました'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
