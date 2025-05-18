@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>入退出管理</title>
-    <link rel="stylesheet" href="/login/login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 
 <body>
@@ -16,7 +16,7 @@
         <p id="status">ボタンを押してください</p>
         <button id="accessButton">入退出処理</button>
     </div>
-    <script src="/login/login.js"></script>
+    <script src="{{ url_for('static', filename='login.js') }}"></script>
 </body>
 
 </html>
