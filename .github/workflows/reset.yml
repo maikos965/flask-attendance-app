@@ -1,0 +1,13 @@
+name: Daily Reset
+
+on:
+  schedule:
+    - cron:  '0 15 * * *'  # JST 0時
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST to reset endpoint
+        run: curl -X POST https://flask-attendance-app-tgbd.onrender.com/reset
