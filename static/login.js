@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(err => {
             console.error(err);
             status.textContent = 'エラーが発生しました';
-        });
+        })
         .finally(() => {
             accessButton.disabled = false;  // 処理が終わったら再有効化
         });
