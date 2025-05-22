@@ -37,9 +37,15 @@ def serve_login_static(filename):
 
 @app.route('/access', methods=['POST'])
 def access():
-    device_id = request.json.get('deviceId')
+    try:
+        content = request.get_json(force=True)
+        device_id = content.get('deviceId')
+    except Exception as e:
+        print(f"[ERROR] JSON decode error: {e}")
+        return jsonify({'status': 'error', 'message': '不正なデータ形式です'}), 400
+
     if not device_id:
-        return jsonify({'status': 'error', 'message': 'Device ID is required'}), 400
+        return jsonify({'status': 'error', 'message': 'Device IDが指定されていません'}), 400
 
     data = load_data()
 
