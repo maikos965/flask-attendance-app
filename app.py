@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -25,11 +25,10 @@ def index():
         # データベースから人数を取得
         current_count = CurrentAccess.query.count()
         
-        # HTMLファイルを読み込んで人数を埋め込む
-        with open('index.html', 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        return html_content.replace('{{ current_count }}', str(current_count))
+        # templates/index.html を読み込んで人数をレンダリングする
+        return render_template('index.html', current_count=current_count)
     except FileNotFoundError:
+        # Flaskはtemplatesフォルダを自動的に見つけるため、このエラーは発生しにくくなります
         return "Error: index.html not found", 404
 
 @app.route('/access', methods=['POST'])
