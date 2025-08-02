@@ -1,21 +1,32 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
-    <title>入室人数</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入退室管理システム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #container {
+            border: 2px solid #ccc;
+            padding: 20px;
+            display: inline-block;
+            border-radius: 10px;
+        }
+        #count {
+            font-size: 4em;
+            color: #333;
+            margin: 20px 0;
+        }
+    </style>
 </head>
-
 <body>
-    <header>
-        <a href="/login" class="header-link">入退出入力画面へ</a>
-    </header>
-    <div class="container">
+    <div id="container">
         <h1>現在の入室人数</h1>
-        <p id="count">読み込み中...</p>
+        <p id="count">{{ current_count }}</p>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-
 </html>
