@@ -2,11 +2,12 @@ import os
 import json
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO, emit # <-- 追加
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here' # <-- 任意の秘密鍵を設定してください
-socketio = SocketIO(app) # <-- 追加
+# 秘密鍵を環境変数から取得する。環境変数が設定されていない場合は開発用にデフォルト値を使用。
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-random-fallback-secret-key')
+socketio = SocketIO(app)
 
 # Renderのデータベース接続URLを使用
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
@@ -60,4 +61,28 @@ def access_log():
             if existing_device:
                 db.session.delete(existing_device)
                 db.session.commit()
-                message = "
+                message = "退室を記録しました"
+            else:
+                message = "現在、入室中の人はいません"
+        else:
+            return jsonify({'error': 'Invalid command'}), 400
+        
+        current_count = CurrentAccess.query.count()
+        
+        # WebSocket経由で人数の更新を通知
+        socketio.emit('update_count', {'count': current_count}) 
+
+        return jsonify({'message': message, 'count': current_count}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# WebSocket接続イベントハンドラ
+@socketio.on('connect')
+def test_connect():
+    print('Client connected')
+
+# アプリケーションの実行方法を修正
+if __name__ == '__main__':
+    # app.run()ではなく、socketio.run()を使用する
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
