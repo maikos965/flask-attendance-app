@@ -1,73 +1,70 @@
-from flask import Flask, render_template, send_from_directory, request, jsonify
-import json
 import os
+import json
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
+DATA_FILE = 'data.json'
 
-# data.json の新しいパス
-DATA_FILE = os.path.join(os.path.dirname(__file__), 'data.json')
-
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, 'r') as f:
-        return json.load(f)
-
-def save_data(data):
+# data.jsonが存在しない場合は作成し、初期データを書き込む
+if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
+        json.dump({'current_access': []}, f)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
-@app.route('/data/<path:filename>')
-def serve_data_static(filename):
-    # data フォルダ内の静的ファイルを提供
-    return send_from_directory('.', filename)
-
-@app.route('/login/<path:filename>')
-def serve_login_static(filename):
-    # login フォルダ内の静的ファイルを提供
-    return send_from_directory('../login', filename)
+    """トップページを表示し、現在の入室人数を埋め込む"""
+    try:
+        with open(DATA_FILE, 'r') as f:
+            log_data = json.load(f)
+        current_count = len(log_data.get('current_access', []))
+        
+        # HTMLファイルを読み込んで人数を埋め込む
+        with open('index.html', 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        return html_content.replace('{{ current_count }}', str(current_count))
+    except FileNotFoundError:
+        return "Error: index.html not found", 404
+    except json.JSONDecodeError:
+        return "Error: Invalid JSON format in data.json", 500
 
 @app.route('/access', methods=['POST'])
-def access():
+def access_log():
+    """入室・退室のコマンドを受け取り、記録を更新する"""
     try:
-        content = request.get_json(force=True)
-        device_id = content.get('deviceId')
+        data = request.json
+        device_id = data.get('deviceId')
+        command = request.args.get('command') # <-- URLパラメータからcommandを取得
+
+        if not device_id or not command:
+            return jsonify({'error': 'deviceId or command not provided'}), 400
+
+        with open(DATA_FILE, 'r+') as f:
+            log_data = json.load(f)
+            
+            if command == 'enter':
+                if device_id not in log_data['current_access']:
+                    log_data['current_access'].append(device_id)
+                    message = "入室を記録しました"
+                else:
+                    message = "既に入室済みです"
+            elif command == 'exit':
+                if device_id in log_data['current_access']:
+                    log_data['current_access'].remove(device_id)
+                    message = "退室を記録しました"
+                else:
+                    message = "既に入室していません"
+            else:
+                return jsonify({'error': 'Invalid command'}), 400
+
+            # ファイルを最初から書き直す
+            f.seek(0)
+            json.dump(log_data, f, indent=4)
+            f.truncate()
+
+        return jsonify({'message': message, 'count': len(log_data['current_access'])}), 200
+
     except Exception as e:
-        print(f"[ERROR] JSON decode error: {e}")
-        return jsonify({'status': 'error', 'message': '不正なデータ形式です'}), 400
-
-    if not device_id:
-        return jsonify({'status': 'error', 'message': 'Device IDが指定されていません'}), 400
-
-    data = load_data()
-
-    if device_id in data:
-        data.remove(device_id)
-        save_data(data)
-        return jsonify({'status': 'logout', 'message': '退出しました'})
-    else:
-        data.append(device_id)
-        save_data(data)
-        return jsonify({'status': 'login', 'message': '入室しました'})
-
-@app.route('/count', methods=['GET'])
-def count():
-    # 入室人数を返す
-    data = load_data()
-    return jsonify({'count': len(data)})
-    
-@app.route('/reset', methods=['POST'])
-def reset_data():
-    save_data([])
-    return jsonify({'status': 'reset', 'message': '入室データをリセットしました'})
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
