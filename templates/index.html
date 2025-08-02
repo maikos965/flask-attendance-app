@@ -22,6 +22,27 @@
             margin: 20px 0;
         }
     </style>
+    <!-- Socket.IOクライアントライブラリをCDNから読み込む -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // WebSocketサーバーに接続
+        var socket = io();
+
+        // サーバーからの'update_count'イベントを待ち受ける
+        socket.on('update_count', function(data) {
+            console.log('人数の更新通知を受信:', data);
+            // 人数が変更されたらページをリロード
+            location.reload();
+        });
+
+        // 接続確認のためのログ（オプション）
+        socket.on('connect', function() {
+            console.log('WebSocketに接続しました！');
+        });
+        socket.on('disconnect', function() {
+            console.log('WebSocketから切断されました。');
+        });
+    </script>
 </head>
 <body>
     <div id="container">
