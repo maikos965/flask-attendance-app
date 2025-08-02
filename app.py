@@ -28,7 +28,6 @@ def index():
         # templates/index.html を読み込んで人数をレンダリングする
         return render_template('index.html', current_count=current_count)
     except FileNotFoundError:
-        # Flaskはtemplatesフォルダを自動的に見つけるため、このエラーは発生しにくくなります
         return "Error: index.html not found", 404
 
 @app.route('/access', methods=['POST'])
@@ -53,14 +52,15 @@ def access_log():
             else:
                 message = "既に入室済みです"
         elif command == 'exit':
-            # 存在する場合のみ削除
-            existing_device = CurrentAccess.query.filter_by(device_id=device_id).first()
+            # 存在するデバイスレコードを1つ取得して削除
+            # どのデバイスIDを削除するかは問わないようにする
+            existing_device = CurrentAccess.query.first() 
             if existing_device:
                 db.session.delete(existing_device)
                 db.session.commit()
                 message = "退室を記録しました"
             else:
-                message = "既に入室していません"
+                message = "現在、入室中の人はいません"
         else:
             return jsonify({'error': 'Invalid command'}), 400
         
