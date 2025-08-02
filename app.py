@@ -2,8 +2,11 @@ import os
 import json
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit # <-- 追加
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key-here' # <-- 任意の秘密鍵を設定してください
+socketio = SocketIO(app) # <-- 追加
 
 # Renderのデータベース接続URLを使用
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
@@ -53,22 +56,8 @@ def access_log():
                 message = "既に入室済みです"
         elif command == 'exit':
             # 存在するデバイスレコードを1つ取得して削除
-            # どのデバイスIDを削除するかは問わないようにする
             existing_device = CurrentAccess.query.first() 
             if existing_device:
                 db.session.delete(existing_device)
                 db.session.commit()
-                message = "退室を記録しました"
-            else:
-                message = "現在、入室中の人はいません"
-        else:
-            return jsonify({'error': 'Invalid command'}), 400
-        
-        current_count = CurrentAccess.query.count()
-        return jsonify({'message': message, 'count': current_count}), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+                message = "
